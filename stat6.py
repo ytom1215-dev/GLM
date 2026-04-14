@@ -90,6 +90,9 @@ with tab1:
 # ==========================================
 # タブ2: ロジスティック回帰
 # ==========================================
+# ==========================================
+# タブ2: ロジスティック回帰
+# ==========================================
 with tab2:
     st.header("ロジスティック回帰：割合や生データに「S字カーブ」を当てる")
     st.markdown("対象データ：**発芽率、コンバージョン率、購入の有無**（0〜1の割合、または 0 or 1 の生データ）")
@@ -141,24 +144,37 @@ with tab2:
     with col1:
         fig, ax = plt.subplots(figsize=(8, 5))
         
-        if "生データ" in data_type:
-            sns.stripplot(x='Temp', y='Flag', data=df_raw, color="#2980b9", alpha=0.1, jitter=0.2, ax=ax)
-            ax.set_ylabel("発芽有無 (1=発芽, 0=未発芽)")
-            ax.set_title("生データのロジスティック回帰")
-        else:
-            sns.scatterplot(x='Temp', y='Rate', data=df_rate, color="#2980b9", s=100, ax=ax)
-            ax.set_ylabel("発芽割合 (Success / Total)")
-            ax.set_title("割合データのロジスティック回帰")
-
+        # モデルによる予測値の計算 (X軸は 20〜30 の実数)
         x_pred = np.linspace(20, 30, 100)
         y_pred = 1 / (1 + np.exp(-(b0 + b1 * x_pred)))
         
-        x_ticks = temps_logi
-        ax.set_xticks(range(len(x_ticks)))
-        ax.set_xticklabels(x_ticks)
-        
-        x_plot = (x_pred - 21) / 2
-        ax.plot(x_plot, y_pred, color="#e74c3c", linewidth=2, label="ロジスティック回帰 (S字カーブ)")
+        if "生データ" in data_type:
+            # stripplotはX軸を「0, 1, 2...」というカテゴリとして扱う
+            sns.stripplot(x='Temp', y='Flag', data=df_raw, color="#2980b9", alpha=0.1, jitter=0.2, ax=ax)
+            ax.set_ylabel("発芽有無 (1=発芽, 0=未発芽)")
+            ax.set_title("生データのロジスティック回帰")
+            
+            # S字カーブのX座標も「0, 1, 2...」のスケールに変換して描画する
+            x_plot = (x_pred - 21) / 2
+            ax.plot(x_plot, y_pred, color="#e74c3c", linewidth=2, label="ロジスティック回帰 (S字カーブ)")
+            
+            # 目盛りを整える
+            ax.set_xticks(range(len(temps_logi)))
+            ax.set_xticklabels(temps_logi)
+            
+        else:
+            # scatterplotはX軸を「そのままの数値」として扱う
+            sns.scatterplot(x='Temp', y='Rate', data=df_rate, color="#2980b9", s=100, ax=ax)
+            ax.set_ylabel("発芽割合 (Success / Total)")
+            ax.set_title("割合データのロジスティック回帰")
+            
+            # S字カーブのX座標もそのままの数値で描画する
+            ax.plot(x_pred, y_pred, color="#e74c3c", linewidth=2, label="ロジスティック回帰 (S字カーブ)")
+            
+            # 目盛りを整える
+            ax.set_xticks(temps_logi)
+            ax.set_xticklabels(temps_logi)
+
         ax.set_xlabel("温度 (Temp)")
         ax.legend()
         st.pyplot(fig)
